@@ -1,0 +1,8 @@
+torch
+torchvision
+clip-by-openai
+transformers
+scikit-learn
+opencv-python
+fastapi
+uvicorn

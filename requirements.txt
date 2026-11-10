@@ -1,8 +1,13 @@
 torch
 torchvision
-clip-by-openai
+open_clip_torch
 transformers
 scikit-learn
 opencv-python
 fastapi
 uvicorn
+numpy
+pillow
+pyarrow
+huggingface_hub
+tqdm

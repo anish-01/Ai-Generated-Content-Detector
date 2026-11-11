@@ -23,6 +23,19 @@ Couple things to keep in mind:
 - The "real" half of every GenImage generator is ImageNet val photos, so the same real photo can show up under more than one generator. Dedupe on `source_name` when splitting so it doesn't leak between train and test.
 - Real images are JPEG and the fakes are PNG, so a model can cheat by picking up on JPEG artifacts. The robustness tests (JPEG compression on everything) should catch that.
 
+### FaceForensics++ frames
+
+FF++ has to be requested and downloaded with the official script first. Then pull ~1 frame per second from each video:
+
+```bash
+# try it on one video per folder first and check the output + disk estimate
+python scripts/extract_ffpp_frames.py --ffpp-root /path/to/FaceForensics --limit 1 --out data/ffpp_test
+# full run (resumable: rerun after an interruption and finished videos are skipped)
+python scripts/extract_ffpp_frames.py --ffpp-root /path/to/FaceForensics --workers 8
+```
+
+Frames go to `data/ffpp/{real,fake}/<source or method>/<video>/<video>_f<frame>.png` with an index at `data/ffpp/index.csv` (`path,label,generator,video,source_video,frame,compression`). Defaults are c23 and lossless PNG; `--format jpg` is much smaller but adds a second round of compression. Split by `source_video`, not by frame. Frames from one clip are near-duplicates, and fake `000_003` shares its background with real `000`.
+
 ## Preprocessing
 
 `models/dataset.py` has one `RealFakeDataset` that both models use. It resizes to 224x224 and normalizes with ImageNet stats for ResNet or CLIP stats for CLIP.

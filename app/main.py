@@ -1,12 +1,16 @@
 import io
 from fastapi import FastAPI,HTTPException,UploadFile
 from PIL import Image, UnidentifiedImageError
+from pathlib import Path
+from fastapi.responses import FileResponse
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "AI Content Dector API is running "}
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post("/predict")

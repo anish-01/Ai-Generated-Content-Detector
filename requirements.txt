@@ -11,3 +11,4 @@ pillow
 pyarrow
 huggingface_hub
 tqdm
+python-multipart

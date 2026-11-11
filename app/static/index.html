@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Content Detector</title>
+</head>
+<body>
+  <h1>AI Content Detector</h1>
+  <p>Upload an image to check whether it may be AI-generated.</p>
+
+  <form id="upload-form">
+    <label for="image">Choose an image</label>
+    <input id="image" name="file" type="file" accept="image/*" required>
+    <button type="submit">Analyze image</button>
+  </form>
+
+  <p id="result" role="status"></p>
+  <p>Demo mode: predictions are placeholders, not model results.</p>
+</body>
+</html>

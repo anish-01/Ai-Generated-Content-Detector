@@ -36,6 +36,15 @@ python scripts/extract_ffpp_frames.py --ffpp-root /path/to/FaceForensics --worke
 
 Frames go to `data/ffpp/{real,fake}/<source or method>/<video>/<video>_f<frame>.png` with an index at `data/ffpp/index.csv` (`path,label,generator,video,source_video,frame,compression`). Defaults are c23 and lossless PNG; `--format jpg` is much smaller but adds a second round of compression. Split by `source_video`, not by frame. Frames from one clip are near-duplicates, and fake `000_003` shares its background with real `000`.
 
+### CIFAKE
+
+```bash
+python scripts/check_cifake.py            # audit CIFAKE (temp ~110 MB download, deleted after)
+python scripts/check_cifake.py --seed 7   # different visual sample
+```
+
+Downloads the public [CIFAKE](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images) zip to a temp file (no Kaggle login needed), reads the images straight from the zip without extracting them, then deletes it. It counts REAL/FAKE per split, opens every image, looks for duplicates, writes 20 REAL + 20 FAKE contact sheets to `docs/cifake_samples/`, and saves the results to `docs/cifake_audit.md`. Only needs Pillow (`pip install pillow`). Results: 50k/50k train, 10k/10k test, no corrupt files.
+
 ## Preprocessing
 
 `models/dataset.py` has one `RealFakeDataset` that both models use. It resizes to 224x224 and normalizes with ImageNet stats for ResNet or CLIP stats for CLIP.

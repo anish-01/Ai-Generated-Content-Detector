@@ -12,3 +12,4 @@ pyarrow
 huggingface_hub
 tqdm
 python-multipart
+matplotlib

@@ -45,6 +45,29 @@ python scripts/check_cifake.py --seed 7   # different visual sample
 
 Downloads the public [CIFAKE](https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images) zip to a temp file (no Kaggle login needed), reads the images straight from the zip without extracting them, then deletes it. It counts REAL/FAKE per split, opens every image, looks for duplicates, writes 20 REAL + 20 FAKE contact sheets to `docs/cifake_samples/`, and saves the results to `docs/cifake_audit.md`. Only needs Pillow (`pip install pillow`). Results: 50k/50k train, 10k/10k test, no corrupt files.
 
+For the train/val/test split the images need to be on disk:
+
+```bash
+curl -L -o /tmp/cifake.zip https://www.kaggle.com/api/v1/datasets/download/birdy654/cifake-real-and-ai-generated-synthetic-images
+mkdir -p data/cifake && unzip -q /tmp/cifake.zip -d data/cifake && rm /tmp/cifake.zip   # ~0.6 GB on disk
+```
+
+## Train / val / test split
+
+```bash
+python scripts/download_genimage.py --per-class 250   # small GenImage subset (~0.4 GB)
+python scripts/split_datasets.py                      # writes splits/*.csv + docs/dataset_split_report.md
+python scripts/split_datasets.py --verify-only        # re-run the leakage checks
+python -m unittest tests.test_split_datasets -v
+```
+
+CIFAKE + GenImage are split 70/15/15 (seed 42, stratified by dataset/generator/label) into `splits/train.csv`, `val.csv` and `test.csv`. Midjourney is held out completely in `splits/cross_generator_test.csv` for the cross-generator test. Identical files (MD5) and GenImage reals that share an ImageNet `source_name` always stay in one split, and anything that overlaps the held-out generator is dropped from the normal splits (listed in `splits/excluded.csv`). Near-duplicates aren't detected. Details and counts are in `docs/dataset_split_report.md`.
+
+```python
+train = RealFakeDataset("splits/train.csv", model="resnet", train=True)
+cross = RealFakeDataset("splits/cross_generator_test.csv", model="clip")
+```
+
 ## Preprocessing
 
 `models/dataset.py` has one `RealFakeDataset` that both models use. It resizes to 224x224 and normalizes with ImageNet stats for ResNet or CLIP stats for CLIP.

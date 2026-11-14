@@ -112,6 +112,7 @@ def read_index(csv_path):
         rows = list(csv.DictReader(f))
     for r in rows:
         r["label"] = int(r["label"])
+        r.setdefault("path", r.get("image_path"))  # splits/*.csv use image_path
         if not Path(r["path"]).is_absolute():
             r["path"] = str(ROOT / r["path"])
     return rows

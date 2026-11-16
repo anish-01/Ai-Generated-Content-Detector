@@ -84,3 +84,42 @@ loader = make_loader(train, batch_size=64, shuffle=True)
 It takes an index CSV, a folder (anything with `real/` and `fake/` subfolders, including CIFAKE's `REAL/FAKE`), or a list of row dicts. If the CSV has a `split` column you can filter with `split="train"`. There's also `downscale(scale)` and `center_crop(frac)` for the robustness tests.
 
 Sanity check: `python -m models.dataset data/genimage/index.csv`
+
+## Models
+
+### CLIP linear probe
+
+Frozen CLIP ViT-L/14 (OpenAI weights) with one linear layer on top, following Ojha et al. 2023. CLIP itself is never trained. Every image gets embedded once, and then a logistic regression is fit on those embeddings.
+
+```bash
+python scripts/train_clip_linear.py                    # ViT-L/14, ~2.5 h on an M2 (mostly embedding images)
+python scripts/train_clip_linear.py --arch ViT-B-16    # ~30 min, a bit weaker
+python scripts/train_clip_linear.py --limit-train 256 --limit-val 128   # smoke test
+```
+
+Embeddings get cached in `features/` and saved as it goes, so if it gets interrupted just rerun the same command and it continues where it stopped. After that it tries a few regularization strengths (C) and keeps the one with the lowest val loss. It never touches the test split or the Midjourney holdout.
+
+Outputs: `checkpoints/clip_linear_best.pth` (just the linear head, CLIP weights get downloaded by open_clip), `results/clip_linear_c_sweep.csv` and `.png`.
+
+Using it (outputs 2 logits like the ResNet, 0 = real, 1 = fake):
+
+```python
+from models.clip_linear import load_clip_linear
+from models.dataset import RealFakeDataset, make_loader
+
+model = load_clip_linear("checkpoints/clip_linear_best.pth", device)
+ds = RealFakeDataset("splits/test.csv", model="clip")   # model="clip" for CLIP normalization
+for x, y in make_loader(ds):
+    p_fake = model(x.to(device)).softmax(1)[:, 1]
+```
+
+Val results (ViT-L/14, picked C=100 by val loss):
+
+| | accuracy | ROC-AUC |
+|---|---|---|
+| all of val (18,152) | 95.74% | 0.9913 |
+| CIFAKE (18,000) | 95.77% | |
+| GenImage BigGAN (76) | 96.05% | |
+| GenImage SD 1.4 (76) | 88.16% | |
+
+The curve basically flattens out past C=3, and train/val stay close the whole way, so it's not overfitting (makes sense, it's only 769 parameters). Heads up that the GenImage val sets are tiny, so those two numbers are noisy. The real test is the Midjourney holdout in #15.

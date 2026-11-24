@@ -224,3 +224,5 @@ data/*
 *.pt
 *.pth
 checkpoints/
+features/
+results/*_smoke*
